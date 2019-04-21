@@ -1,0 +1,10 @@
+Features
+
+- Limit orbits (k)
+- Background image
+
+Refactoring
+
+- Sort order (ascending/descending)
+- Enum sort (labels, constants, compare functions)
+- discreteFourierTransform with a single array of complex numbers
