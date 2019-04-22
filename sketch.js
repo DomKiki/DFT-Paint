@@ -1,6 +1,6 @@
-const STT_RENDER = 0;
+const STT_IDLE   = 0;
 const STT_DRAW   = 1;
-const STT_DONE   = 2;
+const STT_RENDER = 2;
 
 const SORT_FREQ  = 0;
 const SORT_AMP   = 1;
@@ -8,7 +8,9 @@ const SORT_PHS   = 2;
 const SORT_RE    = 3;
 const SORT_IM    = 4;
 
+var canvas;
 var canvasDim    = [900, 600];
+var img;
 
 var time         = 0;
 var signalX		 = [];
@@ -24,12 +26,16 @@ var btnSize      = 50;
 var btnSpace     = 5;
 var btnStyle     = "width: " + btnSize + "px; height: "+ btnSize + "px;";
 var sortLabels   = ["Freq", "Amp", "Phase", "Re", "Im"];
-var sortIndex    = 0;
+var sortIndex    = 1;
 var state        = STT_DRAW;
+
+var kSliderText;
+var kSlider;
+var sliderWidth  = 100;
 
 function setup() {
 	
-	createCanvas(canvasDim[0], canvasDim[1]);	
+	canvas = createCanvas(canvasDim[0], canvasDim[1]);	
 
 	var btn = 1;
 	
@@ -59,14 +65,30 @@ function setup() {
 	btnClear.attribute('style', btnClear.attribute('style') + btnStyle + " font-size: 20px;");
 	btnClear.mousePressed(pressClear);
 	
+	// Orbits slider and text
+	kSlider = createSlider(1,1,1,1);
+	kSlider.position(canvasDim[0]  - btn * (btnSize + btnSpace) - sliderWidth, canvasDim[1] + 2 * btnSize);
+	kSlider.style('width', sliderWidth + "px");
+	
+	kSliderText = createP(kSlider.value() + " Orbit");
+	kSliderText.position(canvasDim[0]  - btn * (btnSize + btnSpace) - sliderWidth, canvasDim[1] + 2 * btnSize - 50);
+	kSliderText.style('height', 50 + "px");
+	kSliderText.style('width', sliderWidth + "px");
+	kSliderText.style('text-align', 'center');
+	
+	// Drag & Drop background image
+	canvas.dragOver(highlight);
+	canvas.dragLeave(unhighlight);
+	canvas.drop(backgroundImg);
+	
 }
 
 function draw() {
 
 	initCanvas();
 	
-	// Rendering
-	if (state == STT_RENDER) {
+	// Rendering / Done
+	if (!isDrawing()) {
 
 		// Epicycles
 		var x = cycles(canvasDim[0]/2, 100, signalX, 0);
@@ -74,33 +96,36 @@ function draw() {
 		
 		// Values
 		stroke(0);
-		var p = createVector(x.x, y.y);
-		values.unshift(p);
-		line(x.x, x.y, p.x, p.y);
-		line(y.x, y.y, p.x, p.y);
 		beginShape();
 		for (var i = 0; i < values.length; i++)
 			vertex(values[i].x, values[i].y);
 		endShape();
 		
+		// Connecting
+		var p = createVector(x.x, y.y);
+		values.unshift(p);
+		line(x.x, x.y, p.x, p.y);
+		line(y.x, y.y, p.x, p.y);
+		
 		// Time incrementation (dt)
-		time += (TWO_PI / signalY.length);
-		if (time >= TWO_PI) {
-			values = [];
-			if (looping)
-				time = 0;
-			else {
-				time = TWO_PI;
-				state = STT_DONE;
-			}
+		if (isRendering()) {
+			time += (TWO_PI / signalY.length);
+			if (time >= TWO_PI)
+				if (looping) {
+					time = 0;
+					values = [];
+				}
+				else {
+					//time = TWO_PI;
+					state = STT_IDLE;
+				}
 		}
-	
 	}
-	// Drawing / Done
+	// Drawing
 	else {
 		
 		// Save user values 
-		if ((mouseIsPressed) && (state == STT_DRAW) && (mouseInbounds()))
+		if ((mouseIsPressed) && (mouseInbounds()))
 			userValues.push(createVector(mouseX, mouseY));
 			
 		// Draw
@@ -116,25 +141,38 @@ function draw() {
 
 function initCanvas() {
 	
-	background(255);
+	if (img) // ((img) && !(isDrawing()))
+		image(img, 0, 0, width, height);
+	else
+		background(255);
 	noFill();
-	stroke(0);
-	rect(0,0,canvasDim[0],canvasDim[1]);
+	
+	// Max orbits
+	var k   = kSlider.value();
+	var str = k + " Orbit";
+	if (k > 1) str += "s";
+	kSliderText.html(str);
+	
 	
 }
 
 // Draws the epicycles corresponding to the [re, im, freq, amp, phase] array X
-// Note : Theta depends on global variable `time`
-function cycles(x, y, X, phase) {
+// Note  : Theta depends on global variable `time`
+// Input : x,y (position) / X (DFT array) / Rotation
+function cycles(x, y, X, rotation) {
 
 	var px, py, theta, alpha;
 	var alphaRange = [30, 200];
 
-	for (var i = 0; i < X.length; i++) {
+	var limit = kSlider.value();
+	if ((limit > X.length) || (limit < 1))
+		limit = X.length;
+	
+	for (var i = 0; i < limit; i++) {
 		
 		px = x;
 		py = y;
-		theta = X[i].f * time + X[i].phs + phase;
+		theta = X[i].f * time + X[i].phs + rotation;
 		alpha = map(i, 0, X.length - 1, alphaRange[1], alphaRange[0]);
 		
 		// Circle
@@ -222,7 +260,7 @@ function mouseInbounds() { return ((mouseX >= 0) && (mouseX < canvasDim[0]) && (
 
 function mouseReleased() {
 	
-	if ((state == STT_DRAW) && (userValues.length > 0)) {
+	if (isDrawing() && (userValues.length > 0)) {
 		
 		// Push values
 		for (var i = 0; i < userValues.length; i++) {
@@ -242,6 +280,10 @@ function mouseReleased() {
 		signalX = discreteFourierTransform(signalX);
 		signalY = discreteFourierTransform(signalY);
 		
+		// Max orbits
+		kSlider.attribute('max', signalX.length);
+		kSlider.value(signalX.length);
+		
 		// Sort
 		sortSignal();
 		
@@ -257,7 +299,7 @@ function pressLoop() {
 	looping = !looping;
 	if (looping) {
 		this.style("border-style", "inset");
-		if (state == STT_DONE)
+		if (isIdle())
 			state = STT_RENDER;
 	}
 	else
@@ -284,3 +326,17 @@ function pressClear() {
 	signalY    = [];
 	state      = STT_DRAW;
 }
+
+/******************** Drag & Drop ********************/
+
+function highlight() { canvas.addClass('hightlight'); }
+
+function unhighlight() { canvas.removeClass('hightlight'); }
+
+function backgroundImg(file) { img = createImg(file.data).hide(); }
+
+/********************** State ***********************/
+
+function isIdle()      { return (state == STT_IDLE)   };
+function isDrawing()   { return (state == STT_DRAW)   };
+function isRendering() { return (state == STT_RENDER) };

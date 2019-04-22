@@ -1,10 +1,16 @@
-Features
-
-- Limit orbits (k)
-- Background image
-
 Refactoring
 
 - Sort order (ascending/descending)
 - Enum sort (labels, constants, compare functions)
 - discreteFourierTransform with a single array of complex numbers
+
+Bugfix
+
+- Sometimes the drawing loops around and connects back to the first value.
+  Supposedly caused by time being equal to 2Pi so it's kind of expected.
+  But. It. Must. Go.
+  
+- After the drawing is completed, keep the values drawn but get rid of the epicycles and the image.
+  Or scale the image to match the mapped point.
+  Or keep the image and draw the points on top of it, but it has to be the original points, not the mapped ones.
+  Image needs an alpha by the way.
