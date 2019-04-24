@@ -1,85 +1,96 @@
+/****************** Global variables *****************/
+
+// States
 const STT_IDLE   = 0;
 const STT_DRAW   = 1;
 const STT_RENDER = 2;
+var   state      = STT_DRAW;
+var   looping    = false;
 
+// Sorting
 const SORT_FREQ  = 0;
 const SORT_AMP   = 1;
 const SORT_PHS   = 2;
 const SORT_RE    = 3;
 const SORT_IM    = 4;
+const SORT_ASC   = 0;
+const SORT_DSC   = 1;
+var   sortLabels = ["Freq", "Amp", "Phase", "Re", "Im"];
+var   sortIndex  = SORT_AMP;
+var   sortOrders = ["Asc", "Desc"];
+var   sortOrder  = SORT_ASC;
 
+// Canvas
 var canvas;
 var canvasDim    = [900, 600];
 var img;
 
+// Values
 var time         = 0;
 var signalX		 = [];
 var signalY		 = [];
-
 var values       = [];
 var userValues   = [];
 var maxValues    = [];
 
-var looping      = false;
-
+// HTML / CSS related
 var btnSize      = 50;
 var btnSpace     = 5;
 var btnStyle     = "width: " + btnSize + "px; height: "+ btnSize + "px;";
-var sortLabels   = ["Freq", "Amp", "Phase", "Re", "Im"];
-var sortIndex    = 1;
-var state        = STT_DRAW;
+var kSliderText, kSlider,
+    radSort, btnSort, btnLooping, btnOrder;
+var tutoVisible  = true;
 
-var kSliderText;
-var kSlider;
-var sliderWidth  = 100;
+/********************* p5 Methods ********************/
 
 function setup() {
 	
 	canvas = createCanvas(canvasDim[0], canvasDim[1]);	
+	canvas.parent("canvasDiv");
 
 	var btn = 1;
 	
 	// Looping button
-	var btnLooping = createButton("Loop");
-	btnLooping.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
-	btnLooping.attribute('style', btnLooping.attribute('style') + btnStyle);
-	btnLooping.mousePressed(pressLoop);
+	btnLooping = select('#btnLooping');
+	btnLooping.position(canvasDim[0] - btn * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
+	btn += 2;
 	
-	// Sort button
-	var btnSort = createButton(sortLabels[sortIndex]);
-	var p = btnLooping.position;
-	btnSort.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
-	btnSort.attribute('style', btnSort.attribute('style') + btnStyle);
-	btnSort.mousePressed(pressSort);
-	btn++;
+	// Order button
+	btnOrder = select('#btnOrder');
+	btnOrder.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
+	
+	// Sort button and radios
+	btnSort = select('#btnSort');
+	btnSort.position(canvasDim[0] - btn * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize)
+	       .html(sortLabels[sortIndex]);
+	var radSpan = select('#radioSort');
+	radSort = selectAll('input', radSpan);
+	radSpan.position(canvasDim[0] - btn * (btnSize + btnSpace) + ((2 * btnSize + btnSpace) / 2) - (radSpan.width / 2), canvasDim[1] + (btnSize + btnSpace) + 70, btnSize, btnSize);
+	btn += 2;
 	
 	// Replay button
-	var btnReplay = createButton("" + '\u25B6');
+	var btnReplay = select('#btnReplay');
 	btnReplay.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
-	btnReplay.attribute('style', btnReplay.attribute('style') + btnStyle + " font-size: 30px;");
-	btnReplay.mousePressed(pressReplay);
 	
 	// Clear button
-	var btnClear = createButton("" + '\u2327');
+	var btnClear = select('#btnClear');
 	btnClear.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
-	btnClear.attribute('style', btnClear.attribute('style') + btnStyle + " font-size: 20px;");
-	btnClear.mousePressed(pressClear);
 	
 	// Orbits slider and text
-	kSlider = createSlider(1,1,1,1);
-	kSlider.position(canvasDim[0]  - btn * (btnSize + btnSpace) - sliderWidth, canvasDim[1] + 2 * btnSize);
-	kSlider.style('width', sliderWidth + "px");
+	kSlider = select('#kSlider');
+	var w = kSlider.width;
+	kSlider.position(canvasDim[0]  - btn * (btnSize + btnSpace) - w, canvasDim[1] + 2 * btnSize - 20);
 	
-	kSliderText = createP(kSlider.value() + " Orbit");
-	kSliderText.position(canvasDim[0]  - btn * (btnSize + btnSpace) - sliderWidth, canvasDim[1] + 2 * btnSize - 50);
-	kSliderText.style('height', 50 + "px");
-	kSliderText.style('width', sliderWidth + "px");
-	kSliderText.style('text-align', 'center');
+	kSliderText = select('#kSliderText');
+	kSliderText.position(canvasDim[0]  - btn * (btnSize + btnSpace) - w, canvasDim[1] + 2 * btnSize - 60);
 	
 	// Drag & Drop background image
-	canvas.dragOver(highlight);
-	canvas.dragLeave(unhighlight);
-	canvas.drop(backgroundImg);
+	canvas.dragOver(highlight)
+	      .dragLeave(unhighlight)
+	      .drop(backgroundImg);
+	
+	// Tutorial
+	makeInstructions();
 	
 }
 
@@ -115,18 +126,23 @@ function draw() {
 					time = 0;
 					values = [];
 				}
-				else {
-					//time = TWO_PI;
+				else 
 					state = STT_IDLE;
-				}
 		}
+		
 	}
 	// Drawing
 	else {
-		
+			
 		// Save user values 
-		if ((mouseIsPressed) && (mouseInbounds()))
+		if ((mouseIsPressed) && (mouseInbounds())) {
 			userValues.push(createVector(mouseX, mouseY));
+			// Tutorial flag
+			if (tutoVisible) {
+				tutoVisible = false;
+				showInstructions(false);
+			}
+		}
 			
 		// Draw
 		stroke(50);
@@ -134,15 +150,23 @@ function draw() {
 		for (var v of userValues)
 			vertex(v.x, v.y);
 		endShape();
-		
+					
 	}
 
 }
 
+/********************* Initialize ********************/
+
 function initCanvas() {
 	
-	if (img) // ((img) && !(isDrawing()))
+	if ((img) && isDrawing()) {
+		colorMode(RGB, 255);
+		//tint(255, 126);
 		image(img, 0, 0, width, height);
+		tint(0, 153, 204, 126);
+		image(img, 0, 0, width, height);
+		tint(255,255);
+	}
 	else
 		background(255);
 	noFill();
@@ -155,6 +179,48 @@ function initCanvas() {
 	
 	
 }
+
+function makeInstructions() {
+	
+	var labelSize = btnSize + 20;
+	var offset    = [-10, -100];
+	
+	var infoSize  = [650, 100];
+	createP("Draw in the canvas with the mouse.<br>Drag & drop an image to trace it.<br>It will not show on the final result<br>but will still be present if the screen is cleared")
+		.size(infoSize[0], infoSize[1])
+		.position(canvasDim[0] / 2 - infoSize[0] / 2, canvasDim[1] / 4 - infoSize[1] / 2)
+		.style("font-size", "40px")
+		.class("dndInfo");
+	createText("En/disable Loop", "instructions", select('#btnLooping').position(),  offset,     labelSize, labelSize);
+	createText("Sorting order",   "instructions", select('#btnOrder').position(),    offset,     labelSize, labelSize);
+	createText("Sorting param",   "instructions", select('#btnSort').position(),     offset,     labelSize, labelSize);
+	createText("Replay Cycles",   "instructions", select('#btnReplay').position(),   offset,     labelSize, labelSize);
+	createText("Clear Screen",    "instructions", select('#btnClear').position(),    offset,     labelSize, labelSize);
+	createText("Limit Orbits",    "instructions", select('#kSliderText').position(), [20, -105], labelSize, labelSize);
+	
+	showInstructions(true);
+		
+}
+
+function showInstructions(show) {
+	tutoVisible = true;
+	var txt = selectAll('p');
+	for (t of txt)
+		if (show)
+			t.removeClass('hidden');
+		else
+			t.addClass('hidden');
+	
+}
+
+function createText(txt, clas, pos, off, w, h) {
+	createP(txt)
+		.size(w, h)
+		.position(pos.x + off[0], pos.y + off[1])
+		.class(clas);
+}
+
+/*********************** Maths ***********************/
 
 // Draws the epicycles corresponding to the [re, im, freq, amp, phase] array X
 // Note  : Theta depends on global variable `time`
@@ -226,6 +292,7 @@ function discreteFourierTransform(s) {
 /****************** Sorting methods ******************/
 
 function sortSignal() {
+	// Sort
 	var compare;
 	switch (sortIndex) {
 		case SORT_RE:
@@ -246,6 +313,11 @@ function sortSignal() {
 	}	
 	signalX.sort(compare);	
 	signalY.sort(compare);
+	// Order
+	if (sortOrder == SORT_DSC) {
+		signalX.reverse();
+		signalY.reverse();
+	}
 }
 
 function compareRe(a,b)    { return b.re  - a.re;  }
@@ -298,18 +370,26 @@ function mouseReleased() {
 function pressLoop() {
 	looping = !looping;
 	if (looping) {
-		this.style("border-style", "inset");
+		btnLooping.style("border-style", "inset");
 		if (isIdle())
 			state = STT_RENDER;
 	}
 	else
-		this.style("border-style", "outset");
+		btnLooping.style("border-style", "outset");
 }
 
 function pressSort() {
+	
+	switchRadio(sortIndex, 0);
+	
+	// Actual sort
 	sortIndex = (sortIndex + 1) % sortLabels.length;
 	sortSignal();
-	this.html(sortLabels[sortIndex]);
+	// Button text
+	btnSort.html(sortLabels[sortIndex]);
+	
+	switchRadio(sortIndex, 1);
+	
 }
 
 function pressReplay() {
@@ -325,15 +405,38 @@ function pressClear() {
 	signalX    = [];
 	signalY    = [];
 	state      = STT_DRAW;
+	showInstructions(true);
+}
+
+function pressOrder() {
+	sortOrder = (sortOrder + 1) % sortOrders.length;
+	// Actual sort
+	sortSignal();
+	// Button text
+	btnOrder.html(sortOrders[sortOrder]);
+}
+
+function switchRadio(index, state) {
+	// Check / enable next
+	if (state) {
+		radSort[index].removeAttribute('disabled');
+		radSort[index].attribute('checked', 'true');
+	}
+	// Uncheck / disable previous
+	else {
+		radSort[index].removeAttribute('checked');
+		radSort[index].attribute('disabled', 'true');
+	}
 }
 
 /******************** Drag & Drop ********************/
 
-function highlight() { canvas.addClass('hightlight'); }
-
-function unhighlight() { canvas.removeClass('hightlight'); }
-
-function backgroundImg(file) { img = createImg(file.data).hide(); }
+function highlight()         { canvas.addClass('highlight'); }
+function unhighlight()       { canvas.removeClass('highlight'); }
+function backgroundImg(file) { 
+	img = createImg(file.data).hide(); 
+	unhighlight();
+}
 
 /********************** State ***********************/
 

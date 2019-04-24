@@ -1,6 +1,9 @@
+Features
+
+- Add keyboard shortcuts
+
 Refactoring
 
-- Sort order (ascending/descending)
 - Enum sort (labels, constants, compare functions)
 - discreteFourierTransform with a single array of complex numbers
 
@@ -13,4 +16,5 @@ Bugfix
 - After the drawing is completed, keep the values drawn but get rid of the epicycles and the image.
   Or scale the image to match the mapped point.
   Or keep the image and draw the points on top of it, but it has to be the original points, not the mapped ones.
-  Image needs an alpha by the way.
+  
+- Alpha is not being applied to the image, tint() is not doing anything

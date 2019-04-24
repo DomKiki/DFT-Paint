@@ -13,8 +13,43 @@
 			margin: 20px 0 0 20px;
 			border: 1px solid black;
 		}
-		.p5Canvas.hover {
+		.p5Canvas.highlight {
 			border: 1px dashed red;
+		}
+		.buttonDiv {
+			margin: auto;
+		}
+		.square {
+			height: 50px;
+			width: 50px;
+		}
+		#btnReplay, #btnClear {
+			font-size: 30px;
+		}
+		.slider {
+			width: 100px;
+		}
+		#kSliderText {
+			height: 100px;
+			width: 100px;
+			text-align: center;
+			font-size: 20px;
+		}
+		#radioSort input {
+			disabled: true;
+		}
+		.dndInfo {
+			font: 30px arial;
+			text-align: center;
+		}
+		.instructions {
+			font: 16px arial;
+			font-style: normal;
+			text-align: center;
+			vertical-align: middle;
+		}
+		.hidden {
+			visibility: hidden;
 		}
 	</style>
     <script src="../p5/p5.min.js"></script>
@@ -23,5 +58,22 @@
     <script src="sketch.js"></script>
   </head>
   <body>
+	<div id="canvasDiv"></div>
+	<div id="buttonDiv">
+		<button id="btnLooping"  class="square" onclick="pressLoop()">Loop</button>
+		<span id="radioSort">
+			<input type="radio" name="rdSort" value="Freq"  disabled>
+			<input type="radio" name="rdSort" value="Amp"   checked>
+			<input type="radio" name="rdSort" value="Phase" disabled>
+			<input type="radio" name="rdSort" value="Re"    disabled>
+			<input type="radio" name="rdSort" value="Im"    disabled>
+		</span>
+		<button id="btnSort"     class="square" onclick="pressSort()"></button>
+		<button id="btnOrder"    class="square" onclick="pressOrder()">Asc</button>
+		<button id="btnReplay"   class="square" onclick="pressReplay()">&#x25B6;</button>
+		<button id="btnClear"    class="square" onclick="pressClear()">&#x239A;</button>
+		<p      id="kSliderText"></p>
+		<input type="range" min="1" max="1" value="1" class="slider" id="kSlider">
+	</div>
   </body>
 </html>
