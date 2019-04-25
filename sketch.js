@@ -40,6 +40,7 @@ var btnStyle     = "width: " + btnSize + "px; height: "+ btnSize + "px;";
 var kSliderText, kSlider,
     radSort, btnSort, btnLooping, btnOrder;
 var tutoVisible  = true;
+var divTuto;
 
 /********************* p5 Methods ********************/
 
@@ -47,6 +48,8 @@ function setup() {
 	
 	canvas = createCanvas(canvasDim[0], canvasDim[1]);	
 	canvas.parent("canvasDiv");
+	
+	divTuto = select("#infosDiv");
 
 	var btn = 1;
 	
@@ -85,9 +88,10 @@ function setup() {
 	kSliderText.position(canvasDim[0]  - btn * (btnSize + btnSpace) - w, canvasDim[1] + 2 * btnSize - 60);
 	
 	// Drag & Drop background image
-	canvas.dragOver(highlight)
-	      .dragLeave(unhighlight)
-	      .drop(backgroundImg);
+	for (e of [canvas, divTuto])
+		e.dragOver(highlight)
+		 .dragLeave(unhighlight)
+		 .drop(backgroundImg);
 	
 	// Tutorial
 	makeInstructions();
@@ -163,8 +167,6 @@ function initCanvas() {
 		colorMode(RGB, 255);
 		//tint(255, 126);
 		image(img, 0, 0, width, height);
-		tint(0, 153, 204, 126);
-		image(img, 0, 0, width, height);
 		tint(255,255);
 	}
 	else
@@ -184,19 +186,19 @@ function makeInstructions() {
 	
 	var labelSize = btnSize + 20;
 	var offset    = [-10, -100];
+	var c = "instructions",
+		p = "infosDiv";
 	
-	var infoSize  = [650, 100];
-	createP("Draw in the canvas with the mouse.<br>Drag & drop an image to trace it.<br>It will not show on the final result<br>but will still be present if the screen is cleared")
-		.size(infoSize[0], infoSize[1])
-		.position(canvasDim[0] / 2 - infoSize[0] / 2, canvasDim[1] / 4 - infoSize[1] / 2)
-		.style("font-size", "40px")
-		.class("dndInfo");
-	createText("En/disable Loop", "instructions", select('#btnLooping').position(),  offset,     labelSize, labelSize);
-	createText("Sorting order",   "instructions", select('#btnOrder').position(),    offset,     labelSize, labelSize);
-	createText("Sorting param",   "instructions", select('#btnSort').position(),     offset,     labelSize, labelSize);
-	createText("Replay Cycles",   "instructions", select('#btnReplay').position(),   offset,     labelSize, labelSize);
-	createText("Clear Screen",    "instructions", select('#btnClear').position(),    offset,     labelSize, labelSize);
-	createText("Limit Orbits",    "instructions", select('#kSliderText').position(), [20, -105], labelSize, labelSize);
+	var infoSize  = [650, 100];		
+	var str = "<span class='bold'>Draw</span> in the canvas with the mouse.<br><br><span class='bold'>Drag & drop</span> an image to trace it.";
+	createText(str, "dndInfo", p, [0,0], [0,0], infoSize[0], infoSize[1])
+		.position(canvasDim[0] / 2 - infoSize[0] / 2, canvasDim[1] / 2 - infoSize[1]);
+	createText("En/disable Loop", c, p, select('#btnLooping').position(),  offset,     labelSize, labelSize);
+	createText("Sorting order",   c, p, select('#btnOrder').position(),    offset,     labelSize, labelSize);
+	createText("Sorting param",   c, p, select('#btnSort').position(),     offset,     labelSize, labelSize);
+	createText("Replay Cycles",   c, p, select('#btnReplay').position(),   offset,     labelSize, labelSize);
+	createText("Clear Screen",    c, p, select('#btnClear').position(),    offset,     labelSize, labelSize);
+	createText("Limit Orbits",    c, p, select('#kSliderText').position(), [20, -105], labelSize, labelSize);
 	
 	showInstructions(true);
 		
@@ -204,7 +206,7 @@ function makeInstructions() {
 
 function showInstructions(show) {
 	tutoVisible = true;
-	var txt = selectAll('p');
+	var txt = selectAll('p', divTuto);
 	for (t of txt)
 		if (show)
 			t.removeClass('hidden');
@@ -213,8 +215,9 @@ function showInstructions(show) {
 	
 }
 
-function createText(txt, clas, pos, off, w, h) {
-	createP(txt)
+function createText(txt, clas, par, pos, off, w, h) {
+	return createP(txt)
+		.parent(par)
 		.size(w, h)
 		.position(pos.x + off[0], pos.y + off[1])
 		.class(clas);
@@ -405,6 +408,7 @@ function pressClear() {
 	signalX    = [];
 	signalY    = [];
 	state      = STT_DRAW;
+	img        = null;
 	showInstructions(true);
 }
 
@@ -431,8 +435,13 @@ function switchRadio(index, state) {
 
 /******************** Drag & Drop ********************/
 
-function highlight()         { canvas.addClass('highlight'); }
-function unhighlight()       { canvas.removeClass('highlight'); }
+function highlight(event)    { 
+	event.preventDefault(); 
+	canvas.addClass('highlight');
+}
+function unhighlight() { 
+	canvas.removeClass('highlight'); 
+}
 function backgroundImg(file) { 
 	img = createImg(file.data).hide(); 
 	unhighlight();

@@ -1,0 +1,59 @@
+body      { 
+	padding: 0; 
+	margin: 0;
+} 
+
+/********************** Canvas ********************/
+.p5Canvas { 
+	margin: 20px 0 0 20px;
+	border: 1px solid black;
+}
+.p5Canvas.highlight {
+	border: 1px dashed red;
+}
+
+/************* Buttons, Slider, Radios ************/
+.buttonDiv {
+	margin: auto;
+}
+.square {
+	height: 50px;
+	width: 50px;
+}
+#btnReplay, #btnClear {
+	font-size: 30px;
+}
+.slider {
+	width: 100px;
+}
+#kSliderText {
+	height: 100px;
+	width: 100px;
+	text-align: center;
+	font-size: 20px;
+}
+#radioSort input {
+	disabled: true;
+}
+
+/****************** Instructions ******************/
+.dndInfo {
+	font: 30px arial;
+	color: #b3b3cc;
+	text-align: center;
+	font-style: oblique;
+}
+.instructions {
+	font: 16px arial;
+	color: #b3b3cc;
+	font-style: oblique;
+	text-align: center;
+	vertical-align: middle;
+}
+.hidden {
+	visibility: hidden;
+}
+.bold {
+	color: grey;
+	font-weight: bold;
+}
