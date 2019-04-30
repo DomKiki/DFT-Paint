@@ -22,7 +22,6 @@ var   sortOrder  = SORT_ASC;
 
 // Canvas
 var canvas;
-var canvasDim    = [900, 600];
 var img;
 
 // Values
@@ -46,7 +45,7 @@ var divTuto;
 
 function setup() {
 	
-	canvas = createCanvas(canvasDim[0], canvasDim[1]);	
+	canvas = createCanvas(1200, 800);
 	canvas.parent("canvasDiv");
 	
 	divTuto = select("#infosDiv");
@@ -55,37 +54,37 @@ function setup() {
 	
 	// Looping button
 	btnLooping = select('#btnLooping');
-	btnLooping.position(canvasDim[0] - btn * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
+	btnLooping.position(width - btn * (btnSize + btnSpace), height + (btnSize + btnSpace), btnSize, btnSize);
 	btn += 2;
 	
 	// Order button
 	btnOrder = select('#btnOrder');
-	btnOrder.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
+	btnOrder.position(width - btn++ * (btnSize + btnSpace), height + (btnSize + btnSpace), btnSize, btnSize);
 	
 	// Sort button and radios
 	btnSort = select('#btnSort');
-	btnSort.position(canvasDim[0] - btn * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize)
+	btnSort.position(width - btn * (btnSize + btnSpace), height + (btnSize + btnSpace), btnSize, btnSize)
 	       .html(sortLabels[sortIndex]);
 	var radSpan = select('#radioSort');
 	radSort = selectAll('input', radSpan);
-	radSpan.position(canvasDim[0] - btn * (btnSize + btnSpace) + ((2 * btnSize + btnSpace) / 2) - (radSpan.width / 2), canvasDim[1] + (btnSize + btnSpace) + 70, btnSize, btnSize);
+	radSpan.position(width - btn * (btnSize + btnSpace) + ((2 * btnSize + btnSpace) / 2) - (radSpan.width / 2), height + (btnSize + btnSpace) + 70, btnSize, btnSize);
 	btn += 2;
 	
 	// Replay button
 	var btnReplay = select('#btnReplay');
-	btnReplay.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
+	btnReplay.position(width - btn++ * (btnSize + btnSpace), height + (btnSize + btnSpace), btnSize, btnSize);
 	
 	// Clear button
 	var btnClear = select('#btnClear');
-	btnClear.position(canvasDim[0] - btn++ * (btnSize + btnSpace), canvasDim[1] + (btnSize + btnSpace), btnSize, btnSize);
+	btnClear.position(width - btn++ * (btnSize + btnSpace), height + (btnSize + btnSpace), btnSize, btnSize);
 	
 	// Orbits slider and text
 	kSlider = select('#kSlider');
 	var w = kSlider.width;
-	kSlider.position(canvasDim[0]  - btn * (btnSize + btnSpace) - w, canvasDim[1] + 2 * btnSize - 20);
+	kSlider.position(width  - btn * (btnSize + btnSpace) - w, height + 2 * btnSize - 20);
 	
 	kSliderText = select('#kSliderText');
-	kSliderText.position(canvasDim[0]  - btn * (btnSize + btnSpace) - w, canvasDim[1] + 2 * btnSize - 60);
+	kSliderText.position(width  - btn * (btnSize + btnSpace) - w, height + 2 * btnSize - 60);
 	
 	// Drag & Drop background image
 	for (e of [canvas, divTuto])
@@ -106,8 +105,8 @@ function draw() {
 	if (!isDrawing()) {
 
 		// Epicycles
-		var x = cycles(canvasDim[0]/2, 100, signalX, 0);
-		var y = cycles(100, canvasDim[1]/2, signalY, HALF_PI);
+		var x = cycles(width/2, 100, signalX, 0);
+		var y = cycles(100, height/2, signalY, HALF_PI);
 		
 		// Values
 		stroke(0);
@@ -192,7 +191,7 @@ function makeInstructions() {
 	var infoSize  = [650, 100];		
 	var str = "<span class='bold'>Draw</span> in the canvas with the mouse.<br><br><span class='bold'>Drag & drop</span> an image to trace it.";
 	createText(str, "dndInfo", p, [0,0], [0,0], infoSize[0], infoSize[1])
-		.position(canvasDim[0] / 2 - infoSize[0] / 2, canvasDim[1] / 2 - infoSize[1]);
+		.position(width / 2 - infoSize[0] / 2, height / 2 - infoSize[1]);
 	createText("En/disable Loop", c, p, select('#btnLooping').position(),  offset,     labelSize, labelSize);
 	createText("Sorting order",   c, p, select('#btnOrder').position(),    offset,     labelSize, labelSize);
 	createText("Sorting param",   c, p, select('#btnSort').position(),     offset,     labelSize, labelSize);
@@ -331,7 +330,7 @@ function comparePhase(a,b) { return b.phs - a.phs; }
 
 /****************** Mouse methods ********************/
 
-function mouseInbounds() { return ((mouseX >= 0) && (mouseX < canvasDim[0]) && (mouseY >= 0) && (mouseY < canvasDim[1])); }
+function mouseInbounds() { return ((mouseX >= 0) && (mouseX < width) && (mouseY >= 0) && (mouseY < height)); }
 
 function mouseReleased() {
 	
